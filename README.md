@@ -44,10 +44,10 @@ processor.process(
     output_numpy_array = True,    # 生成numpy数组
     output_row_features = False   # 不生成单行特征文件
 )
+```
 
 
-
-# AutoFeatCleaner - Automated Feature Engineering & Data Cleaning Toolkit
+# AutoFeat - Automated Feature Engineering & Data Cleaning Toolkit
 
 A one-stop solution for automated feature extraction, noise cleaning, and dataset preprocessing from CSV/XLSX files. Designed to streamline your data preparation pipeline with minimal configuration.
 
@@ -91,3 +91,4 @@ processor.process(
     output_numpy_array = True,
     output_row_features = False
 )
+```
