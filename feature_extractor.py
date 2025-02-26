@@ -335,6 +335,8 @@ class FeatureExtractor:
         selected_features = features_corr[features_corr >= threshold].index.tolist()
         removed_features = features_corr[features_corr < threshold].index.tolist()
 
+        print(f"以下列与标签列相关系数过低，将被删除：{removed_features}")
+
         # 保存被移除特征信息
         removed_features_info = {feat: features_corr[feat] for feat in removed_features}
 
@@ -372,7 +374,7 @@ class FeatureExtractor:
 if __name__ == '__main__':
     # 初始化FeatureExtractor实例
     extractor = FeatureExtractor(
-        file_path='loan_data.xls',  # 可以是.csv, .xlsx, .xls文件
+        file_path='new_loan_data.xls',  # 可以是.csv, .xlsx, .xls文件
         # exclude_cols=['act_idn_sky', 'cdzbxyfg', 'product_type_new2'],
         label_col='RISK_GRADE',
         # id_col='id_column_name',  # 如果有ID列，指定ID列名字；如果没有，可以不指定
