@@ -1,4 +1,4 @@
-# AutoFeatCleaner - 自动化特征工程与数据清洗工具
+# AutoFeat- 自动化特征工程与数据清洗工具
 
 一键处理CSV/XLSX数据的特征提取与噪声清洗工具，专为高效数据预处理设计，助力机器学习流水线快速落地。
 csdn博客：https://blog.csdn.net/qq_43199509/article/details/145886703
