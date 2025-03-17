@@ -7,7 +7,10 @@ from datetime import datetime
 
 
 class FeatureExtractor:
-    def __init__(self, file_path, exclude_cols=None, label_col=None, id_col=None, drop_first_col=False):
+    def __init__(self, file_path, exclude_cols=None, label_col=None, id_col=None, drop_first_col=False,
+                 split_date=False,
+                 existing_mapping_path=None
+                 ):
         """
         初始化方法。
 
@@ -16,6 +19,8 @@ class FeatureExtractor:
         :param label_col: 标签列的列名。
         :param id_col: 用作ID的列名。
         :param drop_first_col: 是否删除第一列，默认不删除。
+        :param split_date: 是否拆分日期。
+        :param existing_mapping_path: 是否存在生产过的特征字典。
         """
         self.file_path = file_path
         self.exclude_cols = exclude_cols if exclude_cols is not None else []
@@ -28,7 +33,17 @@ class FeatureExtractor:
         self.ids = None  # 存储ID列
         self.feature_names = None
         self.mapping_dicts = {}  # 存储分类变量的映射字典
+        self.split_date = split_date  # 是否拆分日期
         self.feature_name_to_index = {}  # 存储特征名与其对应的列索引
+        self.existing_mapping_dicts = self._load_existing_mappings(existing_mapping_path)  # 加载现有映射
+
+    @staticmethod
+    def _load_existing_mappings(path):
+        """加载现有的特征映射字典"""
+        if path and os.path.exists(path):
+            with open(path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        return {}
 
     def read_file(self):
         """
@@ -114,7 +129,7 @@ class FeatureExtractor:
             col_data = self.features[col]
             # 尝试解析为日期类型
             parsed_dates = pd.to_datetime(col_data, errors='coerce', infer_datetime_format=True)
-            if parsed_dates.notnull().sum() > 0:
+            if parsed_dates.notnull().sum() > 0 and self.split_date:
                 # 是日期列，根据存在的日期部分拆分
                 date_parts = {'year': parsed_dates.dt.year,
                               'month': parsed_dates.dt.month,
@@ -144,31 +159,52 @@ class FeatureExtractor:
                     self.feature_names.remove(col)
             else:
                 # 非日期列，处理分类变量
-                value_counts = col_data.value_counts(dropna=False)
-                num_unique_values = len(value_counts)
-                max_count = value_counts.max()
-                if num_unique_values < 50 and max_count > 1:
-                    # 构建映射字典
-                    unique_values = value_counts.index.tolist()
-                    mapping = {val: idx + 1 for idx, val in enumerate(unique_values) if pd.notnull(val)}
-                    print(f"列 '{col}' 的映射字典：{mapping}")
-                    # 映射列的数据
-                    self.features[col] = col_data.map(mapping)
-                    # 将NaN替换为-1
-                    self.features[col].fillna(-1, inplace=True)
-                    # 记录映射字典
-                    self.mapping_dicts[col] = mapping
-                    # 记录特征名与索引
-                    if col not in self.feature_name_to_index:
-                        self.feature_name_to_index[col] = len(self.feature_name_to_index)
-                else:
-                    # 无法处理的列，准备删除
-                    columns_to_drop.append(col)
+                if col in self.existing_mapping_dicts:  # 存在现有映射
+                    self._apply_existing_mapping(col)
+                else:  # 不存在则创建新映射
+                    self._create_new_mapping(col, columns_to_drop)
         # 删除无法处理的列
         if columns_to_drop:
             print(f"以下列无法处理，将被删除：{columns_to_drop}")
             self.features.drop(columns=columns_to_drop, inplace=True)
             self.feature_names = [fn for fn in self.feature_names if fn not in columns_to_drop]
+
+    def _apply_existing_mapping(self, col):
+        """应用现有的映射字典"""
+        existing_mapping = self.existing_mapping_dicts[col]
+        print(f"列 '{col}' 使用现有映射字典：{existing_mapping}")
+
+        # 映射并处理未知值
+        self.features[col] = (
+            self.features[col]
+            .map(lambda x: existing_mapping.get(str(x), -1))  # 处理类型差异
+            .fillna(-1)
+            .astype(int)
+        )
+        # 保留现有映射
+        self.mapping_dicts[col] = existing_mapping
+
+    def _create_new_mapping(self, col, columns_to_drop):
+        """创建新的映射字典"""
+        col_data = self.features[col]
+        value_counts = col_data.value_counts(dropna=False)
+        num_unique_values = len(value_counts)
+        max_count = value_counts.max()
+
+        if num_unique_values < 50 and max_count > 1:
+            unique_values = [v for v in value_counts.index if pd.notnull(v)]
+            mapping = {str(val): idx + 1 for idx, val in enumerate(unique_values)}  # 统一转为字符串键
+            print(f"列 '{col}' 创建新映射字典：{mapping}")
+
+            self.features[col] = (
+                col_data.astype(str)
+                .map(mapping)
+                .fillna(-1)
+                .astype(int)
+            )
+            self.mapping_dicts[col] = mapping
+        else:
+            columns_to_drop.append(col)
 
     def replace_nan(self):
         """
@@ -378,7 +414,8 @@ if __name__ == '__main__':
         # exclude_cols=['act_idn_sky', 'cdzbxyfg', 'product_type_new2'],
         label_col='RISK_GRADE',
         # id_col='id_column_name',  # 如果有ID列，指定ID列名字；如果没有，可以不指定
-        drop_first_col=False  # 默认为False，如有需要可以设置为True
+        drop_first_col=False,  # 默认为False，如有需要可以设置为True,
+        existing_mapping_path='mapping_dicts.json'  # 指定现有映射文件
     )
 
     # 执行数据处理流程，并指定输出方式
