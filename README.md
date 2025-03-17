@@ -1,3 +1,9 @@
+# 更新日志 Update Log
+2025-3-17 增加了指定现存特征字典的功能，用于使用统一字典将不同的文件转换为特征并保持特字典的一致性   翻译成英文用于github
+Added the functionality to specify an existing feature dictionary, which allows for the conversion of different files into features using a unified dictionary, ensuring consistency across the feature dictionary.
+
+
+
 # AutoFeat- 自动化特征工程与数据清洗工具
 
 一键处理CSV/XLSX数据的特征提取与噪声清洗工具，专为高效数据预处理设计，助力机器学习流水线快速落地。
