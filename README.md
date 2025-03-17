@@ -1,6 +1,6 @@
 # 更新日志 Update Log
-2025-3-17 增加了指定现存特征字典的功能，用于使用统一字典将不同的文件转换为特征并保持特字典的一致性   翻译成英文用于github
-Added the functionality to specify an existing feature dictionary, which allows for the conversion of different files into features using a unified dictionary, ensuring consistency across the feature dictionary.
+-2025-3-17 增加了指定现存特征字典的功能，用于使用统一字典将不同的文件转换为特征并保持特字典的一致性   翻译成英文用于github
+-Added the functionality to specify an existing feature dictionary, which allows for the conversion of different files into features using a unified dictionary, ensuring consistency across the feature dictionary.
 
 
 
